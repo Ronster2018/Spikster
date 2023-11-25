@@ -18,15 +18,25 @@ RUN groupadd --gid ${GID} --system laravel
 RUN useradd --system -s /bin/sh -u ${UID} -g ${GID} laravel
 
 WORKDIR /var/www/html
+
+### Dependencies
+
+# Adding Composer binary from image
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+
 COPY --chown=laravel:laravel . .
 
 RUN docker-php-ext-install pdo pdo_mysql
 
+# Installing Php support for redis cache
 RUN mkdir -p /usr/src/php/ext/redis
 RUN curl -L https://github.com/phpredis/phpredis/archive/refs/tags/5.3.7.tar.gz | tar -xvz -C /usr/src/php/ext/redis --strip 1
 RUN echo 'redis' >> /usr/src/php-available-exts \
     && docker-php-ext-install redis
+
+# Adding Php-FPM metrics monitoring go binary
+RUN curl -L https://github.com/hipages/php-fpm_exporter/releases/download/v2.2.0/php-fpm_exporter_2.2.0_linux_amd64 --output-dir /usr/local/bin/ --output php-fpm-exporter
+RUN chmod +x /usr/local/bin/php-fpm-exporter
 
 ### Configurations
 
